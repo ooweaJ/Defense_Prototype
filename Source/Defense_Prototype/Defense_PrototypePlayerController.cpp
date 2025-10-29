@@ -11,6 +11,9 @@
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "Managers/SpawnManager.h"
+#include "Managers/BuildGridManager.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -58,6 +61,12 @@ void ADefense_PrototypePlayerController::SetupInputComponent()
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+
+	// Lightweight key binds for prototype (coexist with Enhanced Input)
+	InputComponent->BindKey(EKeys::Q, IE_Pressed, this, &ADefense_PrototypePlayerController::ToggleBuildMode);
+	InputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &ADefense_PrototypePlayerController::PlaceWall);
+	InputComponent->BindKey(EKeys::E, IE_Pressed, this, &ADefense_PrototypePlayerController::Harvest);
+	InputComponent->BindKey(EKeys::P, IE_Pressed, this, &ADefense_PrototypePlayerController::StartWave);
 }
 
 void ADefense_PrototypePlayerController::OnInputStarted()
@@ -122,4 +131,44 @@ void ADefense_PrototypePlayerController::OnTouchReleased()
 {
 	bIsTouch = false;
 	OnSetDestinationReleased();
+}
+
+void ADefense_PrototypePlayerController::ToggleBuildMode()
+{
+	if (ADefense_PrototypeCharacter* Ch = Cast<ADefense_PrototypeCharacter>(GetPawn()))
+	{
+		Ch->ToggleBuildMode(!Ch->bBuildMode);
+	}
+}
+
+void ADefense_PrototypePlayerController::PlaceWall()
+{
+	if (ADefense_PrototypeCharacter* Ch = Cast<ADefense_PrototypeCharacter>(GetPawn()))
+	{
+		if (Ch->bBuildMode)
+		{
+			Ch->TryPlaceWallAtCursor();
+		}
+	}
+}
+
+void ADefense_PrototypePlayerController::Harvest()
+{
+	if (ADefense_PrototypeCharacter* Ch = Cast<ADefense_PrototypeCharacter>(GetPawn()))
+	{
+		Ch->TryHarvestAtCursor();
+	}
+}
+
+void ADefense_PrototypePlayerController::StartWave()
+{
+	TArray<AActor*> Found;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnManager::StaticClass(), Found);
+	if (Found.Num() > 0)
+	{
+		if (ASpawnManager* SM = Cast<ASpawnManager>(Found[0]))
+		{
+			SM->StartWave();
+		}
+	}
 }

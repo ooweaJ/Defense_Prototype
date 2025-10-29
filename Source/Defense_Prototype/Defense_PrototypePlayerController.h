@@ -58,6 +58,12 @@ protected:
 	void OnTouchTriggered();
 	void OnTouchReleased();
 
+	// Extra gameplay bindings
+	void ToggleBuildMode();
+	void PlaceWall();
+	void Harvest();
+	void StartWave();
+
 private:
 	FVector CachedDestination;
 
